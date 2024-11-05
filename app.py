@@ -48,6 +48,9 @@ def get_item():
 # 개발 환경에서만 실행되도록 수정
 if __name__ == '__main__':
     app.run(debug=True)
+else:
+    # Vercel에서 실행될 때는 app 변수를 직접 사용
+    pass
 
 # Vercel을 위한 export
 app = app
