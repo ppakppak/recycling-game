@@ -1,11 +1,7 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, current_app
 import random
 import sys
-import logging
-
-# 로깅 설정
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+import os
 
 app = Flask(__name__)
 
@@ -33,46 +29,60 @@ ORIGINAL_ITEMS = [
 # 현재 게임에서 사용할 아이템 리스트
 current_items = []
 
+def log_to_vercel(message, level="INFO"):
+    """Vercel 환경에 맞는 로깅 함수"""
+    print(f"[{level}] {message}", file=sys.stderr)
+
 @app.route('/')
 def index():
     try:
-        logger.info("Accessing index route")
+        log_to_vercel("Accessing index route")
         global current_items
         current_items = ORIGINAL_ITEMS.copy()
-        logger.info("Successfully initialized current_items")
+        log_to_vercel("Successfully initialized current_items")
+        
+        # 환경 정보 로깅
+        env_info = {
+            "VERCEL_ENV": os.environ.get("VERCEL_ENV", "unknown"),
+            "PYTHON_VERSION": sys.version,
+            "FLASK_ENV": os.environ.get("FLASK_ENV", "unknown"),
+            "PWD": os.environ.get("PWD", "unknown"),
+        }
+        log_to_vercel(f"Environment info: {env_info}")
+        
         return render_template('index.html')
     except Exception as e:
-        logger.error(f"Error in index route: {str(e)}", exc_info=True)
+        error_msg = f"Error in index route: {str(e)}"
+        log_to_vercel(error_msg, "ERROR")
         return jsonify({
             "error": str(e),
-            "route": "index",
-            "python_version": sys.version,
-            "flask_debug": app.debug
+            "env_info": env_info,
+            "route": "index"
         }), 500
 
 @app.route('/get-item')
 def get_item():
     try:
-        logger.info("Accessing get-item route")
+        log_to_vercel("Accessing get-item route")
         global current_items
         if not current_items:
-            logger.info("Resetting current_items")
+            log_to_vercel("Resetting current_items")
             current_items = ORIGINAL_ITEMS.copy()
         
         if current_items:
             item = random.choice(current_items)
             current_items.remove(item)
-            logger.info(f"Successfully returned item: {item}")
+            log_to_vercel(f"Successfully returned item: {item}")
             return jsonify(item)
-        logger.info("No items available")
+        
+        log_to_vercel("No items available")
         return jsonify({'name': None, 'type': None})
     except Exception as e:
-        logger.error(f"Error in get-item route: {str(e)}", exc_info=True)
+        error_msg = f"Error in get-item route: {str(e)}"
+        log_to_vercel(error_msg, "ERROR")
         return jsonify({
             "error": str(e),
-            "route": "get-item",
-            "python_version": sys.version,
-            "flask_debug": app.debug
+            "route": "get-item"
         }), 500
 
 if __name__ == '__main__':
