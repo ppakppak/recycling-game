@@ -29,21 +29,29 @@ current_items = []
 
 @app.route('/')
 def index():
-    global current_items
-    current_items = ORIGINAL_ITEMS.copy()  # 게임 시작시 아이템 리스트 초기화
-    return render_template('index.html')
+    try:
+        global current_items
+        current_items = ORIGINAL_ITEMS.copy()
+        return render_template('index.html')
+    except Exception as e:
+        print(f"Error in index route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/get-item')
 def get_item():
-    global current_items
-    if not current_items:  # 아이템이 없으면 리스트 다시 채우기
-        current_items = ORIGINAL_ITEMS.copy()
-    
-    if current_items:
-        item = random.choice(current_items)
-        current_items.remove(item)
-        return jsonify(item)
-    return jsonify({'name': None, 'type': None})
+    try:
+        global current_items
+        if not current_items:
+            current_items = ORIGINAL_ITEMS.copy()
+        
+        if current_items:
+            item = random.choice(current_items)
+            current_items.remove(item)
+            return jsonify(item)
+        return jsonify({'name': None, 'type': None})
+    except Exception as e:
+        print(f"Error in get-item route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 # 개발 환경에서만 실행되도록 수정
 if __name__ == '__main__':
