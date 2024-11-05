@@ -1,5 +1,11 @@
 from flask import Flask, render_template, jsonify
 import random
+import sys
+import logging
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -30,35 +36,50 @@ current_items = []
 @app.route('/')
 def index():
     try:
+        logger.info("Accessing index route")
         global current_items
         current_items = ORIGINAL_ITEMS.copy()
+        logger.info("Successfully initialized current_items")
         return render_template('index.html')
     except Exception as e:
-        print(f"Error in index route: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error in index route: {str(e)}", exc_info=True)
+        return jsonify({
+            "error": str(e),
+            "route": "index",
+            "python_version": sys.version,
+            "flask_debug": app.debug
+        }), 500
 
 @app.route('/get-item')
 def get_item():
     try:
+        logger.info("Accessing get-item route")
         global current_items
         if not current_items:
+            logger.info("Resetting current_items")
             current_items = ORIGINAL_ITEMS.copy()
         
         if current_items:
             item = random.choice(current_items)
             current_items.remove(item)
+            logger.info(f"Successfully returned item: {item}")
             return jsonify(item)
+        logger.info("No items available")
         return jsonify({'name': None, 'type': None})
     except Exception as e:
-        print(f"Error in get-item route: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error in get-item route: {str(e)}", exc_info=True)
+        return jsonify({
+            "error": str(e),
+            "route": "get-item",
+            "python_version": sys.version,
+            "flask_debug": app.debug
+        }), 500
 
-# 개발 환경에서만 실행되도록 수정
 if __name__ == '__main__':
     app.run(debug=True)
 else:
-    # Vercel에서 실행될 때는 app 변수를 직접 사용
-    pass
+    # Vercel 환경을 위한 설정
+    app.debug = False
 
 # Vercel을 위한 export
 app = app
