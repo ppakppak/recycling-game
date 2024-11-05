@@ -45,5 +45,9 @@ def get_item():
         return jsonify(item)
     return jsonify({'name': None, 'type': None})
 
+# 개발 환경에서만 실행되도록 수정
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000) 
+    app.run(debug=True)
+
+# Vercel을 위한 export
+app = app
